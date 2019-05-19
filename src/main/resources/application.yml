@@ -1,0 +1,28 @@
+#ip、端口、web应用名
+server:
+  address: 0.0.0.0
+  port: 81
+  servlet:
+    context-path: /hotel
+spring:
+  #设置显示颜色
+  output:
+    ansi:
+      enabled: always
+  #数据库设置
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/hotel?&createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: XQDD
+    password: a1032453509
+
+  jpa:
+    hibernate:
+      #ddl模式
+      ddl-auto: create
+    #显示sql语句
+    show-sql: true
+#日志级别
+logging:
+  level:
+    root: warn
+    com.zheng: trace
