@@ -12,17 +12,21 @@ import java.util.List;
 //用户表
 @Entity
 @Data
-public class SysUser {
+public class SystemUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotBlank
     private String name;
-    @NotBlank
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotBlank
     private String password;
+    
+    private String icon;
+
     //拥有的权限
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToMany
     @Valid
     private List<Role> roles;

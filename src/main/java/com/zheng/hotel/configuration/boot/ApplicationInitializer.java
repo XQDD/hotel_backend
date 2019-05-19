@@ -1,6 +1,6 @@
 package com.zheng.hotel.configuration.boot;
 
-import com.zheng.hotel.service.SysUserService;
+import com.zheng.hotel.service.SystemUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class ApplicationInitializer implements ApplicationListener<ApplicationStartedEvent> {
 
 
-    private final SysUserService sysUserService;
+    private final SystemUserService systemUserService;
 
 
     @Override
@@ -23,7 +23,7 @@ public class ApplicationInitializer implements ApplicationListener<ApplicationSt
 
 
     private void initData() {
-        sysUserService.initSysUser();
+        systemUserService.initSystemUser();
     }
 
 

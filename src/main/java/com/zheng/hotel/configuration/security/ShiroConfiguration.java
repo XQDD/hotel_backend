@@ -1,6 +1,5 @@
 package com.zheng.hotel.configuration.security;
 
-import com.zheng.hotel.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -19,19 +18,14 @@ import java.util.LinkedHashMap;
 public class ShiroConfiguration {
 
 
-    private final SysUserService sysUserService;
 
-    @Bean
-    public ShiroRealm shiroRealm() {
-        return new ShiroRealm(sysUserService);
-    }
 
     /**
      * SecurityManager : 安全管理器，负责所有与安全相关的操作，是Shiro的核心，负责与Shiro的其他组件进行交互
      */
     @Bean
-    public DefaultWebSecurityManager securityManager() {
-        return new DefaultWebSecurityManager(shiroRealm());
+    public DefaultWebSecurityManager securityManager(ShiroRealm shiroRealm) {
+        return new DefaultWebSecurityManager(shiroRealm);
     }
 
 

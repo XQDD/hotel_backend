@@ -2,11 +2,11 @@ package com.zheng.hotel.service;
 
 import com.zheng.hotel.bean.rbac.Permission;
 import com.zheng.hotel.bean.rbac.Role;
-import com.zheng.hotel.bean.rbac.SysUser;
+import com.zheng.hotel.bean.rbac.SystemUser;
 import com.zheng.hotel.dto.Result;
 import com.zheng.hotel.repository.PermissionRepository;
 import com.zheng.hotel.repository.RoleRepository;
-import com.zheng.hotel.repository.SysUserRepository;
+import com.zheng.hotel.repository.SystemUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,45 +16,49 @@ import java.util.function.Predicate;
 
 @Service
 @RequiredArgsConstructor
-public class SysUserService {
-    private final SysUserRepository sysUserRepository;
+public class SystemUserService {
+    private final SystemUserRepository systemUserRepository;
     private final PermissionRepository permissionRepository;
     private final RoleRepository roleRepository;
+    private final SystemOperationService systemOperationService;
 
-    public SysUser login(String name, String password) {
-        var sysUser = sysUserRepository.findByNameAndPassword(name, password)
+    public SystemUser login(String name, String password) {
+        var systemUser = systemUserRepository.findByNameAndPassword(name, password)
                 .orElseThrow(() -> Result.badRequestException("账号或密码有误"));
         //判断是否有登录系统的权限
-        if (sysUser.getRoles().stream().flatMap(r -> r.getPermissions().stream().map(Permission::getPermission)).noneMatch(Predicate.isEqual("sys:user:login"))) {
+        var loginPermission = "sys:user:login";
+        if (systemUser.getRoles().stream().flatMap(r -> r.getPermissions().stream().map(Permission::getPermission)).noneMatch(Predicate.isEqual(loginPermission))) {
             throw Result.badRequestException("该账号没有登录权限");
+        } else {
+            systemOperationService.recordOperation(systemUser, loginPermission);
         }
-        return sysUser;
+        return systemUser;
     }
 
-    public void save(SysUser sysUser) {
-        sysUserRepository.save(sysUser);
+    public void save(SystemUser systemUser) {
+        systemUserRepository.save(systemUser);
     }
 
-    public SysUser getOne(Long id) {
-        return sysUserRepository.getOne(id);
+    public SystemUser getOne(Long id) {
+        return systemUserRepository.getOne(id);
     }
 
 
     /**
      * 初始化用户
      */
-    public void initSysUser() {
+    public void initSystemUser() {
         //超级管理员不存在，初始化
-        if (!sysUserRepository.existsById(1L)) {
+        if (!systemUserRepository.existsById(1L)) {
             //初始化权限
             initPermission();
             initRole();
             //初始化超级管理员
-            var sysUser = new SysUser();
-            sysUser.setName("admin");
-            sysUser.setPassword("admin");
-            sysUser.setRoles(List.of(roleRepository.getOne(1L)));
-            sysUserRepository.save(sysUser);
+            var systemUser = new SystemUser();
+            systemUser.setName("admin");
+            systemUser.setPassword("admin");
+            systemUser.setRoles(List.of(roleRepository.getOne(1L)));
+            systemUserRepository.save(systemUser);
         }
     }
 
@@ -65,6 +69,7 @@ public class SysUserService {
         }
     }
 
+    //TODO 完善权限系统
     private void initPermission() {
         //权限不存在，初始化
         if (permissionRepository.count() == 0) {
@@ -74,7 +79,9 @@ public class SysUserService {
             permissions.add(new Permission("系统登录", "sys:user:login"));
 
             //客房模块
-            //TODO 完善权限系统
+
+            //通用模块
+            permissions.add(new Permission("文件上传", "sys:common:upload"));
 
             permissionRepository.saveAll(permissions);
         }

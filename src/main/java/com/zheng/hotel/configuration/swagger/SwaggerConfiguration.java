@@ -3,7 +3,6 @@ package com.zheng.hotel.configuration.swagger;
 
 import com.github.xiaoymin.swaggerbootstrapui.annotations.EnableSwaggerBootstrapUI;
 import com.google.common.base.Predicates;
-import com.zheng.hotel.bean.rbac.SysUser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
@@ -26,7 +25,6 @@ import java.util.stream.Stream;
 public class SwaggerConfiguration {
     private static final boolean enable = true;
     private final Class[] ignoreClasses = new Class[]{
-            SysUser.class,
             HttpSession.class,
             HttpServletRequest.class,
             HttpServletResponse.class,

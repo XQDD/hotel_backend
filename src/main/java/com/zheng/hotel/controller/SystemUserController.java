@@ -1,11 +1,13 @@
 package com.zheng.hotel.controller;
 
 import com.wf.captcha.utils.CaptchaUtil;
-import com.zheng.hotel.bean.rbac.SysUser;
+import com.zheng.hotel.bean.rbac.SystemUser;
 import com.zheng.hotel.dto.Result;
-import com.zheng.hotel.service.SysUserService;
+import com.zheng.hotel.service.SystemUserService;
 import com.zheng.hotel.utils.CommonUtils;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,17 +32,22 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Validated
 @Slf4j
-public class UserController {
+public class SystemUserController {
 
-    private final SysUserService sysUserService;
-
+    private final SystemUserService systemUserService;
     private final HttpServletRequest request;
 
     @GetMapping("login")
     @ApiOperation("登录")
-    public ResponseEntity<Result<SysUser>> login(@NotBlank String name, @NotBlank String password, @NotBlank String captcha) {
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "name", paramType = "query"),
+            @ApiImplicitParam(name = "password", paramType = "query"),
+            @ApiImplicitParam(name = "captcha", paramType = "query"),
+    })
+    public ResponseEntity<Result<SystemUser>> login(@NotBlank String name, @NotBlank String password, @NotBlank String captcha) {
         //校验验证码
-        if (!CaptchaUtil.ver(captcha, request)) {
+        //TODO 演示时加上验证码校验
+        if (!CaptchaUtil.ver(captcha, request) && false) {
             throw Result.badRequestException(Map.of("captcha", "验证码有误"));
         }
         //当前验证码失效处理
@@ -48,14 +55,14 @@ public class UserController {
         //使用shiro执行登录操作
         var subject = SecurityUtils.getSubject();
         subject.login(new UsernamePasswordToken(name, CommonUtils.encryptPassword(password)));
-        return Result.ok((SysUser) subject.getPrincipal());
+        return Result.ok((SystemUser) subject.getPrincipal());
     }
 
     @RequiresPermissions("sys:user:save")
     @PostMapping("save")
     @ApiOperation("添加或修改用户信息")
-    public ResponseEntity save(@RequestBody @Valid SysUser sysUser) {
-        sysUserService.save(sysUser);
+    public ResponseEntity save(@RequestBody @Valid SystemUser systemUser) {
+        systemUserService.save(systemUser);
         return Result.ok();
     }
 
@@ -68,7 +75,7 @@ public class UserController {
     }
 
 
-    @GetMapping(value = "getCaptcha",produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = "getCaptcha", produces = MediaType.IMAGE_PNG_VALUE)
     @ApiOperation("获取图形验证码")
     public void getCaptcha(HttpServletResponse response) throws IOException {
         CaptchaUtil.outPng(request, response);

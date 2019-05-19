@@ -4,6 +4,9 @@ server:
   port: 81
   servlet:
     context-path: /hotel
+  #最大文件上传大小
+  tomcat:
+    max-http-post-size: 100MB
 spring:
   #设置显示颜色
   output:
@@ -21,8 +24,17 @@ spring:
       ddl-auto: create
     #显示sql语句
     show-sql: true
-#日志级别
+  servlet:
+    #最大文件上传大小
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+#日志输出级别
 logging:
   level:
     root: warn
     com.zheng: trace
+
+file:
+  #文件上传目录
+  upload-dir: D:\environment\Apache24\htdocs\static\hotel\upload\
