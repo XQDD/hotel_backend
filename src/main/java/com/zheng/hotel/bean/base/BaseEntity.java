@@ -1,7 +1,10 @@
-package com.zheng.hotel.bean;
+package com.zheng.hotel.bean.base;
 
+import com.zheng.hotel.bean.rbac.SystemUser;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -26,5 +29,15 @@ public class BaseEntity implements Serializable {
     //更新时间
     @LastModifiedDate
     protected Long updateTime;
+
+    //创建人
+    @CreatedBy
+    @ManyToOne
+    protected SystemUser createdBy;
+
+    //最后修改人
+    @LastModifiedBy
+    @ManyToOne
+    protected SystemUser lastModifiedBy;
 
 }

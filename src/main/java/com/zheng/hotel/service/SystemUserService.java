@@ -4,10 +4,11 @@ import com.zheng.hotel.bean.rbac.Permission;
 import com.zheng.hotel.bean.rbac.Role;
 import com.zheng.hotel.bean.rbac.SystemUser;
 import com.zheng.hotel.dto.Result;
-import com.zheng.hotel.repository.PermissionRepository;
-import com.zheng.hotel.repository.RoleRepository;
-import com.zheng.hotel.repository.SystemUserRepository;
+import com.zheng.hotel.repository.PermissionLongRepository;
+import com.zheng.hotel.repository.RoleLongRepository;
+import com.zheng.hotel.repository.SystemUserLongRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.shiro.authz.AuthorizationException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,9 +18,9 @@ import java.util.function.Predicate;
 @Service
 @RequiredArgsConstructor
 public class SystemUserService {
-    private final SystemUserRepository systemUserRepository;
-    private final PermissionRepository permissionRepository;
-    private final RoleRepository roleRepository;
+    private final SystemUserLongRepository systemUserRepository;
+    private final PermissionLongRepository permissionRepository;
+    private final RoleLongRepository roleRepository;
     private final SystemOperationService systemOperationService;
 
     public SystemUser login(String name, String password) {
@@ -28,7 +29,7 @@ public class SystemUserService {
         //判断是否有登录系统的权限
         var loginPermission = "sys:user:login";
         if (systemUser.getRoles().stream().flatMap(r -> r.getPermissions().stream().map(Permission::getPermission)).noneMatch(Predicate.isEqual(loginPermission))) {
-            throw Result.badRequestException("该账号没有登录权限");
+            throw new AuthorizationException("Subject does not have permission [" + loginPermission + "]");
         } else {
             systemOperationService.recordOperation(systemUser, loginPermission);
         }
@@ -55,7 +56,8 @@ public class SystemUserService {
             initRole();
             //初始化超级管理员
             var systemUser = new SystemUser();
-            systemUser.setName("admin");
+            systemUser.
+                    setName("admin");
             systemUser.setPassword("admin");
             systemUser.setRoles(List.of(roleRepository.getOne(1L)));
             systemUserRepository.save(systemUser);
@@ -79,6 +81,9 @@ public class SystemUserService {
             permissions.add(new Permission("系统登录", "sys:user:login"));
 
             //客房模块
+            permissions.add(new Permission("添加/修改客房信息", "sys:room:save"));
+            permissions.add(new Permission("获取客房标签列表", "sys:room:getRoomTags"));
+            permissions.add(new Permission("获取客房列表", "sys:room:getRoomList"));
 
             //通用模块
             permissions.add(new Permission("文件上传", "sys:common:upload"));

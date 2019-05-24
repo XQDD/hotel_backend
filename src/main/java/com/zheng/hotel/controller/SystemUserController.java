@@ -47,7 +47,9 @@ public class SystemUserController {
     public ResponseEntity<Result<SystemUser>> login(@NotBlank String name, @NotBlank String password, @NotBlank String captcha) {
         //校验验证码
         //TODO 演示时加上验证码校验
-        if (!CaptchaUtil.ver(captcha, request) && false) {
+        if (!CaptchaUtil.ver(captcha, request)
+                && false
+        ) {
             throw Result.badRequestException(Map.of("captcha", "验证码有误"));
         }
         //当前验证码失效处理

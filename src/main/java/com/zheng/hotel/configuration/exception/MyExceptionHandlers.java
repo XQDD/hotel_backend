@@ -1,7 +1,9 @@
 package com.zheng.hotel.configuration.exception;
 
 import com.zheng.hotel.dto.Result;
+import com.zheng.hotel.repository.PermissionLongRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.springframework.boot.autoconfigure.web.ErrorProperties.IncludeStacktrace;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -37,12 +39,14 @@ public class MyExceptionHandlers extends AbstractErrorController {
     private final ErrorAttributes errorAttributes;
     private final ServerProperties serverProperties;
     private final HttpServletRequest request;
+    private final PermissionLongRepository permissionRepository;
 
-    public MyExceptionHandlers(ErrorAttributes errorAttributes, ServerProperties serverProperties, HttpServletRequest request) {
+    public MyExceptionHandlers(ErrorAttributes errorAttributes, ServerProperties serverProperties, HttpServletRequest request, PermissionLongRepository permissionRepository) {
         super(errorAttributes);
         this.errorAttributes = errorAttributes;
         this.serverProperties = serverProperties;
         this.request = request;
+        this.permissionRepository = permissionRepository;
     }
 
 
@@ -95,8 +99,9 @@ public class MyExceptionHandlers extends AbstractErrorController {
 
     //权限错误
     @ExceptionHandler(AuthorizationException.class)
-    public ResponseEntity authorizationException() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Result.error("无访问权限"));
+    public ResponseEntity authorizationException(AuthorizationException e) {
+        var permission = StringUtils.substringBetween(e.getMessage(),"[", "]");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Result.error("操作失败，无"+permissionRepository.findNameByPermission(permission)+"权限"));
     }
 
 

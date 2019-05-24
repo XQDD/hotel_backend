@@ -15,13 +15,14 @@ spring:
   #数据库设置
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/hotel?&createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    #    username: root
     username: XQDD
     password: a1032453509
 
   jpa:
     hibernate:
       #ddl模式
-      ddl-auto: create
+      ddl-auto: create-drop
     #显示sql语句
     show-sql: true
   servlet:

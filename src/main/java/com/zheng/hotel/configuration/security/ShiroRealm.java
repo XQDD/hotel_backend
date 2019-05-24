@@ -2,7 +2,6 @@ package com.zheng.hotel.configuration.security;
 
 import com.zheng.hotel.bean.rbac.Permission;
 import com.zheng.hotel.bean.rbac.SystemUser;
-import com.zheng.hotel.configuration.exception.BusinessException;
 import com.zheng.hotel.service.SystemOperationService;
 import com.zheng.hotel.service.SystemUserService;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +38,8 @@ public class ShiroRealm extends AuthorizingRealm {
             var systemUser = systemUserService.login(token.getUsername(), new String(token.getPassword()));
             //设置登录信息
             return new SimpleAuthenticationInfo(systemUser, systemUser.getPassword(), this.getName());
-        } catch (BusinessException e) {
-            throw new IncorrectCredentialsException(null, e);
+        } catch (RuntimeException e) {
+            throw new AuthenticationException("登录失败", e);
         }
     }
 

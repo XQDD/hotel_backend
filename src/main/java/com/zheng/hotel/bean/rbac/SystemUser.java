@@ -22,11 +22,9 @@ public class SystemUser {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @NotBlank
     private String password;
-    
     private String icon;
 
     //拥有的权限
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @ManyToMany
     @Valid
     private List<Role> roles;
@@ -35,6 +33,7 @@ public class SystemUser {
         return password;
     }
 
+    //对密码进行加密
     public void setPassword(String password) {
         this.password = CommonUtils.encryptPassword(password);
     }
