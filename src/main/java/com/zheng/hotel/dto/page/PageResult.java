@@ -28,6 +28,7 @@ public class PageResult<T> {
     private boolean last;
     @ApiModelProperty(value = "元素偏移量", position = 8)
     private long offset;
+
     public PageResult(Page<T> page) {
         this.content = page.getContent();
         this.pageSize = page.getSize();
@@ -39,6 +40,7 @@ public class PageResult<T> {
         this.currElements = page.getNumberOfElements();
         this.offset = page.getPageable().getOffset();
     }
+
     public PageResult(Collection<T> content, long totalElements, PageInfo pageInfo) {
         this.content = content;
         this.totalElements = totalElements;
@@ -53,6 +55,7 @@ public class PageResult<T> {
         this.currElements = content.size();
         this.offset = (currPage - 1) * pageSize;
     }
+
     public PageResult(PageResult<?> pageResult, Collection<T> content) {
         this.totalElements = pageResult.totalElements;
         this.offset = pageResult.offset;

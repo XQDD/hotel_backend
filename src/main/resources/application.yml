@@ -22,9 +22,12 @@ spring:
   jpa:
     hibernate:
       #ddl模式
-      ddl-auto: create-drop
+      ddl-auto: update
     #显示sql语句
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   servlet:
     #最大文件上传大小
     multipart:

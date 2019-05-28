@@ -20,9 +20,9 @@ public class PageInfo {
     //仅显示一条数据
     public static final PageInfo ONE_DATA = new PageInfo(1);
 
-    @ApiModelProperty(value = "每页数目，默认值10")
+    @ApiModelProperty(value = "每页数目，默认值8")
     @Min(1)
-    private Integer pageSize = 10;
+    private Integer pageSize = 8;
     @ApiModelProperty(value = "当前页，默认值1")
     @Min(1)
     private Integer currPage = 1;

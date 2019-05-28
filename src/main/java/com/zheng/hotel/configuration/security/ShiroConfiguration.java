@@ -18,8 +18,6 @@ import java.util.LinkedHashMap;
 public class ShiroConfiguration {
 
 
-
-
     /**
      * SecurityManager : 安全管理器，负责所有与安全相关的操作，是Shiro的核心，负责与Shiro的其他组件进行交互
      */
@@ -34,7 +32,6 @@ public class ShiroConfiguration {
      */
     @Bean
     public ShiroFilterFactoryBean shiroFilter(SecurityManager securityManager) {
-
         var shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
 

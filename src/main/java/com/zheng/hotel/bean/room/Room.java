@@ -4,23 +4,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zheng.hotel.bean.base.BaseEntity;
 import lombok.Data;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
+import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.util.List;
 
 //客房信息
 @Entity
 @Data
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"roomNo"}))
 public class Room extends BaseEntity {
 
-    //价格（分）
-    private int price;
+    //价格（元）
+    private BigDecimal price;
 
     //保证金（分）
-    private int deposit;
+    private BigDecimal deposit;
 
     //房号
+    @NotBlank
+    @Column(length = 100)
     private String roomNo;
 
     //客房说明
@@ -37,7 +40,7 @@ public class Room extends BaseEntity {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String statusDescription;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE} )
+    @ManyToMany(fetch = FetchType.EAGER)
     private List<RoomTag> roomTags;
 
 

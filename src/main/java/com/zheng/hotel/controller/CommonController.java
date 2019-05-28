@@ -37,7 +37,7 @@ public class CommonController {
 
     @RequiresPermissions("sys:common:upload")
     @ApiOperation("文件上传")
-    @PostMapping(value = "upload}")
+    @PostMapping(value = "upload")
     public ResponseEntity upload(@NotEmpty List<MultipartFile> files) throws IOException {
         var date = new Date();
         var path = "/" + DateFormatUtils.format(date, "yyyy-MM") + "/" + DateFormatUtils.format(date, "dd") + "/";

@@ -1,5 +1,6 @@
 package com.zheng.hotel.bean.rbac;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zheng.hotel.utils.CommonUtils;
 import lombok.Data;
@@ -12,6 +13,8 @@ import java.util.List;
 //用户表
 @Entity
 @Data
+@JsonIgnoreProperties(value = { "hibernateLazyInitializer", "handler" })
+
 public class SystemUser {
 
     @Id

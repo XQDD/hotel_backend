@@ -12,6 +12,7 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
 
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class ShiroRealm extends AuthorizingRealm {
     private final SystemUserService systemUserService;
     private final SystemOperationService systemOperationService;
+    private final HttpServletRequest request;
 
     /**
      * 认证
@@ -68,7 +70,7 @@ public class ShiroRealm extends AuthorizingRealm {
     public boolean isPermitted(PrincipalCollection principals, String permission) {
         boolean isPermitted = super.isPermitted(principals, permission);
         //成功授权，记录操作日志
-        if (isPermitted ) {
+        if (isPermitted && !request.getMethod().equalsIgnoreCase("OPTIONS")) {
             systemOperationService.recordOperation((SystemUser) principals.getPrimaryPrincipal(), permission);
         }
         return isPermitted;

@@ -84,6 +84,8 @@ public class SystemUserService {
             permissions.add(new Permission("添加/修改客房信息", "sys:room:save"));
             permissions.add(new Permission("获取客房标签列表", "sys:room:getRoomTags"));
             permissions.add(new Permission("获取客房列表", "sys:room:getRoomList"));
+            permissions.add(new Permission("获取客房详情", "sys:room:detail"));
+            permissions.add(new Permission("获取所有客房房号", "sys:room:getRoomNos"));
 
             //通用模块
             permissions.add(new Permission("文件上传", "sys:common:upload"));
