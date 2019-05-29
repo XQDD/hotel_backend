@@ -71,14 +71,16 @@ public class SystemUserService {
         }
     }
 
-    //TODO 完善权限系统
     private void initPermission() {
         //权限不存在，初始化
         if (permissionRepository.count() == 0) {
             var permissions = new ArrayList<Permission>();
-            //用户模块
+            //系统用户模块
             permissions.add(new Permission("添加和修改系统用户", "sys:user:save"));
             permissions.add(new Permission("系统登录", "sys:user:login"));
+            permissions.add(new Permission("添加/修改系统角色权限", "sys:user:saveRole"));
+            permissions.add(new Permission("获取所有权限信息", "sys:user:getAllPermission"));
+            permissions.add(new Permission("获取所有角色信息", "sys:user:getAllRole"));
 
             //客房模块
             permissions.add(new Permission("添加/修改客房信息", "sys:room:save"));
@@ -87,6 +89,15 @@ public class SystemUserService {
             permissions.add(new Permission("获取客房详情", "sys:room:detail"));
             permissions.add(new Permission("获取所有客房房号", "sys:room:getRoomNos"));
 
+            //客房入住记录模块
+            permissions.add(new Permission("修改入住记录状态", "sys:roomRecord:setRecordStatus"));
+            permissions.add(new Permission("获取入住列表", "sys:roomRecord:getRecordList"));
+            permissions.add(new Permission("客房入住", "sys:roomRecord:enter"));
+
+            //客户模块
+            permissions.add(new Permission("获取所有客户资料", "sys:customer:getAllCustomers"));
+            permissions.add(new Permission("添加/更新客户资料", "sys:customer:save"));
+
             //通用模块
             permissions.add(new Permission("文件上传", "sys:common:upload"));
 
@@ -94,4 +105,15 @@ public class SystemUserService {
         }
     }
 
+    public void saveRole(Role role) {
+        roleRepository.save(role);
+    }
+
+    public List<Permission> getAllPermission() {
+        return permissionRepository.findAll();
+    }
+
+    public List<Role> getAllRole() {
+        return roleRepository.findAll();
+    }
 }

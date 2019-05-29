@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RoomRepository extends BaseLongRepository<Room> {
     @Query("select r.roomNo from Room r ")
     List<String> getRoomNos();
+
+    Optional<Room> findByRoomNo(String roomNo);
 }

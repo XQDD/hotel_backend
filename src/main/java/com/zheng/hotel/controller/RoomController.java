@@ -6,7 +6,10 @@ import com.zheng.hotel.dto.Result;
 import com.zheng.hotel.dto.page.PageInfo;
 import com.zheng.hotel.dto.page.PageResult;
 import com.zheng.hotel.service.RoomService;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -15,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +35,7 @@ public class RoomController {
     @RequiresPermissions("sys:room:save")
     @ApiOperation("添加/修改客房信息")
     @PostMapping("save")
-    public ResponseEntity save(@RequestBody Room room) {
+    public ResponseEntity save(@RequestBody  @Valid Room room) {
         roomService.save(room);
         return Result.ok();
     }
@@ -51,8 +55,8 @@ public class RoomController {
             @ApiImplicitParam(name = "order", value = "排序方式，0价格"),
             @ApiImplicitParam(name = "asc", value = "是否升序")
     })
-    public ResponseEntity<Result<PageResult<Room>>> getRoomList(PageInfo pageInfo, String keyword, Integer status, Integer order, Boolean asc, @RequestParam(value = "tags[]",required = false) List<String> tags) {
-        return Result.ok(roomService.getRoomList(pageInfo, keyword, status, order, asc,tags));
+    public ResponseEntity<Result<PageResult<Room>>> getRoomList(PageInfo pageInfo, String keyword, Integer order, Boolean asc, @RequestParam(value = "tags[]", required = false) List<String> tags, Long startTime, Long endTime) {
+        return Result.ok(roomService.getRoomList(pageInfo, keyword, order, asc, tags, startTime, endTime));
     }
 
 
@@ -70,5 +74,8 @@ public class RoomController {
     public ResponseEntity<Result<List<String>>> getRoomNos() {
         return Result.ok(roomService.getRoomNos());
     }
+
+
+
 
 }

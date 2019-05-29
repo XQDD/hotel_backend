@@ -1,6 +1,8 @@
 package com.zheng.hotel.controller;
 
 import com.wf.captcha.utils.CaptchaUtil;
+import com.zheng.hotel.bean.rbac.Permission;
+import com.zheng.hotel.bean.rbac.Role;
 import com.zheng.hotel.bean.rbac.SystemUser;
 import com.zheng.hotel.dto.Result;
 import com.zheng.hotel.service.SystemUserService;
@@ -24,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -60,14 +63,6 @@ public class SystemUserController {
         return Result.ok((SystemUser) subject.getPrincipal());
     }
 
-    @RequiresPermissions("sys:user:save")
-    @PostMapping("save")
-    @ApiOperation("添加或修改用户信息")
-    public ResponseEntity save(@RequestBody @Valid SystemUser systemUser) {
-        systemUserService.save(systemUser);
-        return Result.ok();
-    }
-
 
     @GetMapping("logout")
     @ApiOperation("登出")
@@ -81,6 +76,46 @@ public class SystemUserController {
     @ApiOperation("获取图形验证码")
     public void getCaptcha(HttpServletResponse response) throws IOException {
         CaptchaUtil.outPng(request, response);
+    }
+
+
+    @RequiresPermissions("sys:user:save")
+    @PostMapping("save")
+    @ApiOperation("添加或修改用户信息")
+    public ResponseEntity save(@RequestBody @Valid SystemUser systemUser) {
+        if (systemUser.getId() == 1) {
+            if (systemUser.getRoles().size() != 1 || systemUser.getRoles().get(0).getId() != 1)
+                throw Result.badRequestException("系统初始超级管理员角色不可更改");
+        }
+        systemUserService.save(systemUser);
+        return Result.ok();
+    }
+
+
+    @RequiresPermissions("sys:user:saveRole")
+    @PostMapping("saveRole")
+    @ApiOperation("添加/修改系统角色权限")
+    public ResponseEntity saveRole(@RequestBody @Valid Role role) {
+        if (role.getId() == 1) {
+            throw Result.badRequestException("系统初始角色不可更改");
+        }
+        systemUserService.saveRole(role);
+        return Result.ok();
+    }
+
+
+    @RequiresPermissions("sys:user:getAllPermission")
+    @GetMapping("getAllPermission")
+    @ApiOperation("获取所有权限信息")
+    public ResponseEntity<Result<List<Permission>>> getAllPermission() {
+        return Result.ok(systemUserService.getAllPermission());
+    }
+
+    @RequiresPermissions("sys:user:getAllRole")
+    @GetMapping("getAllRole")
+    @ApiOperation("获取所有角色信息")
+    public ResponseEntity<Result<List<Role>>> getAllRole() {
+        return Result.ok(systemUserService.getAllRole());
     }
 
 

@@ -16,10 +16,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +33,6 @@ public class RoomService {
     public void save(Room room) {
         //手动管理标签级联
         room.setRoomTags(roomTagRepository.saveAll(room.getRoomTags()));
-        if (room.getId() != null) {
-            //取出数据库数据，客房状态和状态描述使用数据库上的内容
-            var databaseRoom = roomRepository.findById(room.getId()).orElseThrow(() -> Result.badRequestException("客房不存在"));
-            room.setStatus(databaseRoom.getStatus());
-            room.setStatusDescription(databaseRoom.getStatusDescription());
-        }
         try {
             roomRepository.save(room);
         } catch (DataIntegrityViolationException e) {
@@ -54,8 +45,8 @@ public class RoomService {
         return roomTagRepository.findAll();
     }
 
-    public PageResult<Room> getRoomList(PageInfo pageInfo, String keyword, Integer status, Integer order
-            , Boolean asc, List<String> tags) {
+    public PageResult<Room> getRoomList(PageInfo pageInfo, String keyword, Integer order
+            , Boolean asc, List<String> tags, Long startTime, Long endTime) {
         return new PageResult<>(roomRepository.findAll((root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
             if (StringUtils.isNotBlank(keyword)) {
@@ -66,9 +57,6 @@ public class RoomService {
                         //客房标签模糊搜索
                         cb.like(root.joinList("roomTags", JoinType.LEFT).get("name"), likeKeyword)
                 ));
-            }
-            if (status != null) {
-                predicates.add(cb.equal(root.get("status"), status));
             }
             //排序
             var orders = new ArrayList<Order>();
@@ -91,12 +79,35 @@ public class RoomService {
             if (CollectionUtils.isNotEmpty(tags)) {
                 tags.forEach(tag -> predicates.add(cb.equal(root.joinList("roomTags", JoinType.LEFT).get("name"), tag)));
             }
+            //筛选未被预定或已退房的房间
+            if (startTime != null || endTime != null) {
+                var record = root.join("roomRecords", JoinType.LEFT);
+                Expression<Long> recordDate = record.get("date");
+                var recordStatus = record.get("status");
+                //区间
+                if (startTime != null && endTime != null) {
+                    predicates.add(filterRecord(cb.lessThan(recordDate, startTime), cb, recordStatus));
+                    predicates.add(filterRecord(cb.greaterThan(recordDate, endTime), cb, recordStatus));
+                }
+                //单个日期
+                else if (startTime != null) {
+                    predicates.add(filterRecord(cb.notEqual(recordDate, startTime), cb, recordStatus));
+                } else if (endTime != null) {
+                    predicates.add(filterRecord(cb.notEqual(recordDate, endTime), cb, recordStatus));
+                }
+            }
+
             return query
                     .distinct(true)
                     .where(predicates.toArray(Predicate[]::new))
                     .orderBy(orders)
                     .getRestriction();
         }, pageInfo.getPageRequest()));
+    }
+
+    //排除状态为3(退房)和null的
+    private Predicate filterRecord(Predicate predicate, CriteriaBuilder criteriaBuilder, Path path) {
+        return criteriaBuilder.or(predicate, criteriaBuilder.and(criteriaBuilder.not(predicate), criteriaBuilder.or(criteriaBuilder.equal(path, 3), path.isNull())), path.isNull());
     }
 
     public Optional<Room> findById(long id) {
