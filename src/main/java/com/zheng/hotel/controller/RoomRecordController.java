@@ -5,6 +5,7 @@ import com.zheng.hotel.dto.Result;
 import com.zheng.hotel.dto.page.PageInfo;
 import com.zheng.hotel.dto.page.PageResult;
 import com.zheng.hotel.service.RoomRecordService;
+import com.zheng.hotel.utils.TimeUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -33,22 +34,30 @@ public class RoomRecordController {
     @RequiresPermissions("sys:roomRecord:getRecordList")
     @GetMapping("getRecordList")
     @ApiOperation("获取入住列表")
-    public ResponseEntity<Result<PageResult<RoomRecord>>> getRecordList(PageInfo pageInfo, String keyword) {
-        return Result.ok(roomRecordService.getRecordList(pageInfo, keyword));
+    public ResponseEntity<Result<PageResult<RoomRecord>>> getRecordList(PageInfo pageInfo, String keyword, String startTime, String endTime,Integer status) throws ParseException {
+        Long startDate = null;
+        Long endDate = null;
+        if (startTime != null) {
+            startDate = TimeUtils.DATE_FORMAT.parse(startTime).getTime();
+        }
+        if (endTime != null) {
+            endDate = TimeUtils.DATE_FORMAT.parse(endTime).getTime();
+        }
+        return Result.ok(roomRecordService.getRecordList(pageInfo, keyword, startDate, endDate,status));
     }
 
     @RequiresPermissions("sys:roomRecord:setRecordStatus")
-    @PutMapping("setRecordStatus")
+    @GetMapping("setRecordStatus")
     @ApiOperation("修改入住记录状态")
-    public ResponseEntity setRecordStatus(long recordId, @Min(1) @Max(3) int status) {
-        roomRecordService.setRecordStatus(recordId, status);
+    public ResponseEntity setRecordStatus(long recordId, @Min(0) @Max(3) int status,boolean payed) {
+        roomRecordService.setRecordStatus(recordId, status,payed);
         return Result.ok();
     }
 
     @RequiresPermissions("sys:roomRecord:enter")
     @PostMapping("enter")
     @ApiOperation("客房入住")
-    public ResponseEntity enter(@RequestBody  @Valid RoomRecord roomRecord)  {
+    public ResponseEntity enter(@RequestBody @Valid RoomRecord roomRecord) {
         roomRecordService.enter(roomRecord);
         return Result.ok();
     }

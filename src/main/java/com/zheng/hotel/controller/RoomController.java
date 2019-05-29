@@ -55,8 +55,8 @@ public class RoomController {
             @ApiImplicitParam(name = "order", value = "排序方式，0价格"),
             @ApiImplicitParam(name = "asc", value = "是否升序")
     })
-    public ResponseEntity<Result<PageResult<Room>>> getRoomList(PageInfo pageInfo, String keyword, Integer order, Boolean asc, @RequestParam(value = "tags[]", required = false) List<String> tags, Long startTime, Long endTime) {
-        return Result.ok(roomService.getRoomList(pageInfo, keyword, order, asc, tags, startTime, endTime));
+    public ResponseEntity<Result<PageResult<Room>>> getRoomList(PageInfo pageInfo, String keyword, Integer order, Boolean asc, @RequestParam(value = "tags[]", required = false) List<String> tags, Long startTime, Long endTime,Boolean opened) {
+        return Result.ok(roomService.getRoomList(pageInfo, keyword, order, asc, tags, startTime, endTime,opened));
     }
 
 

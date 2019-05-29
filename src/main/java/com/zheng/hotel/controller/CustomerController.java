@@ -28,7 +28,7 @@ public class CustomerController {
 
     @RequiresPermissions("sys:customer:getAllCustomers")
     @ApiOperation("获取所有客户资料")
-    @GetMapping("getRoomNos")
+    @GetMapping("getAllCustomers")
     public ResponseEntity<Result<PageResult<Customer>>> getAllCustomers(PageInfo pageInfo, String keyword) {
         return Result.ok(customerService.getAllCustomers(pageInfo, keyword));
     }

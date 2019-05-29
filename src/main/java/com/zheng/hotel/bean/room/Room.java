@@ -36,5 +36,6 @@ public class Room extends BaseEntity {
     @JsonIgnore
     private List<RoomRecord> roomRecords;
 
-
+    //客房是否开启
+    private boolean opened=true;
 }

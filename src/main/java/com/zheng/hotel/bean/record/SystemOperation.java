@@ -29,6 +29,8 @@ public class SystemOperation {
     @CreatedDate
     private Long createTime;
 
+
+
     public SystemOperation(SystemUser operator, Permission operation) {
         this.operator = operator;
         this.operation = operation;

@@ -4,16 +4,20 @@ import com.zheng.hotel.bean.rbac.Permission;
 import com.zheng.hotel.bean.rbac.Role;
 import com.zheng.hotel.bean.rbac.SystemUser;
 import com.zheng.hotel.dto.Result;
+import com.zheng.hotel.dto.page.PageInfo;
+import com.zheng.hotel.dto.page.PageResult;
 import com.zheng.hotel.repository.PermissionLongRepository;
 import com.zheng.hotel.repository.RoleLongRepository;
 import com.zheng.hotel.repository.SystemUserLongRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +28,7 @@ public class SystemUserService {
     private final SystemOperationService systemOperationService;
 
     public SystemUser login(String name, String password) {
-        var systemUser = systemUserRepository.findByNameAndPassword(name, password)
+        var systemUser = systemUserRepository.findByNameAndPasswordAndDeleted(name, password, false)
                 .orElseThrow(() -> Result.badRequestException("账号或密码有误"));
         //判断是否有登录系统的权限
         var loginPermission = "sys:user:login";
@@ -81,6 +85,8 @@ public class SystemUserService {
             permissions.add(new Permission("添加/修改系统角色权限", "sys:user:saveRole"));
             permissions.add(new Permission("获取所有权限信息", "sys:user:getAllPermission"));
             permissions.add(new Permission("获取所有角色信息", "sys:user:getAllRole"));
+            permissions.add(new Permission("获取系统用户列表", "sys:user:list"));
+            permissions.add(new Permission("删除系统用户", "sys:user:delete"));
 
             //客房模块
             permissions.add(new Permission("添加/修改客房信息", "sys:room:save"));
@@ -115,5 +121,24 @@ public class SystemUserService {
 
     public List<Role> getAllRole() {
         return roleRepository.findAll();
+    }
+
+    public void delete(long sysUserId) {
+        var user = systemUserRepository.findById(sysUserId).orElseThrow(() -> Result.badRequestException("操作失败，系统用户不存在"));
+        user.setDeleted(true);
+        systemUserRepository.save(user);
+
+    }
+
+    public PageResult<SystemUser> list(PageInfo pageInfo, String keyword) {
+        return new PageResult<>(systemUserRepository.findAll((root, query, cb) -> {
+            var predicates = new ArrayList<javax.persistence.criteria.Predicate>();
+            if (StringUtils.isNotBlank(keyword)) {
+                var likeKeyword = "%" + keyword + "%";
+                predicates.add(cb.like(root.get("name"), likeKeyword));
+            }
+            predicates.add(cb.equal(root.get("deleted"), false));
+            return query.where(predicates.toArray(javax.persistence.criteria.Predicate[]::new)).getRestriction();
+        }, pageInfo.getPageRequest()));
     }
 }

@@ -9,6 +9,6 @@ import java.util.Optional;
 @Repository
 public interface SystemUserLongRepository extends BaseLongRepository<SystemUser> {
 
-    Optional<SystemUser> findByNameAndPassword(String name, String password);
+    Optional<SystemUser> findByNameAndPasswordAndDeleted(String name, String password,boolean deleted);
 
 }

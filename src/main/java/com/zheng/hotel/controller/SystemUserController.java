@@ -5,6 +5,8 @@ import com.zheng.hotel.bean.rbac.Permission;
 import com.zheng.hotel.bean.rbac.Role;
 import com.zheng.hotel.bean.rbac.SystemUser;
 import com.zheng.hotel.dto.Result;
+import com.zheng.hotel.dto.page.PageInfo;
+import com.zheng.hotel.dto.page.PageResult;
 import com.zheng.hotel.service.SystemUserService;
 import com.zheng.hotel.utils.CommonUtils;
 import io.swagger.annotations.Api;
@@ -116,6 +118,23 @@ public class SystemUserController {
     @ApiOperation("获取所有角色信息")
     public ResponseEntity<Result<List<Role>>> getAllRole() {
         return Result.ok(systemUserService.getAllRole());
+    }
+
+
+    @RequiresPermissions("sys:user:delete")
+    @GetMapping("delete")
+    @ApiOperation("删除系统用户")
+    public ResponseEntity delete(long sysUserId) {
+        systemUserService.delete(sysUserId);
+        return Result.ok();
+    }
+
+
+    @RequiresPermissions("sys:user:list")
+    @GetMapping("list")
+    @ApiOperation("获取系统用户列表")
+    public ResponseEntity<Result<PageResult<SystemUser>>> list(PageInfo pageInfo, String keyword) {
+        return Result.ok(systemUserService.list(pageInfo,keyword));
     }
 
 

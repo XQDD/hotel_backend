@@ -26,17 +26,18 @@ public class RoomRecordService {
     private final CustomerRepository customerRepository;
 
 
-    public void setRecordStatus(long recordId, int status) {
+    public void setRecordStatus(long recordId, int status, boolean payed) {
         var record = roomRecordRepository.findById(recordId).orElseThrow(() -> Result.badRequestException(Map.of("recordId", "记录不存在")));
-        if (record.getStatus() < status) {
+        if (record.getStatus() <= status) {
             record.setStatus(status);
+            record.setPayed(payed);
             roomRecordRepository.save(record);
         } else {
-            throw Result.badRequestException(Map.of("status", "状态有误"));
+            throw Result.badRequestException("修改失败，不能将当前状态改为此状态");
         }
     }
 
-    public PageResult<RoomRecord> getRecordList(PageInfo pageInfo, String keyword) {
+    public PageResult<RoomRecord> getRecordList(PageInfo pageInfo, String keyword, Long startTime, Long endTime, Integer status) {
         return new PageResult<>(roomRecordRepository.findAll((root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
             if (StringUtils.isNotBlank(keyword)) {
@@ -49,17 +50,34 @@ public class RoomRecordService {
                         cb.like(root.join("room").get("roomNo"), likeKeyWord)
                 ));
             }
-            return query.where(predicates.toArray(Predicate[]::new)).getRestriction();
+            if (startTime != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startTime));
+            }
+            if (endTime != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("date"), endTime));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return query.where(predicates.toArray(Predicate[]::new)).orderBy(cb.desc(root.get("createTime"))).getRestriction();
         }, pageInfo.getPageRequest()));
     }
 
     public void enter(RoomRecord roomRecord) {
         try {
             //判断客房是否存在
-            var room = roomRepository.findByRoomNo(roomRecord.getRoom().getRoomNo()).orElseThrow(() -> Result.badRequestException("客房不存在"));
+            var room = roomRepository.findByRoomNo(roomRecord.getRoom().getRoomNo())
+                    .orElseThrow(() -> Result.badRequestException("客房不存在"));
+            //判断客房是否开启
+            if (!room.isOpened()) {
+                throw Result.badRequestException("该客房未开启");
+            }
             //日期转换
             var startTime = TimeUtils.DATE_FORMAT.parse(roomRecord.getStartTime()).getTime();
             var endTime = TimeUtils.DATE_FORMAT.parse(roomRecord.getEndTime()).getTime();
+            if (endTime < startTime) {
+                throw Result.badRequestException("入住日期不能晚于离店日期");
+            }
             //客房是否被预定
             var tempTime = startTime;
             while ((endTime - tempTime) >= 0) {

@@ -35,7 +35,8 @@ public class SystemUser {
     public String getPassword() {
         return password;
     }
-
+    //是否删除
+    private boolean deleted;
     //对密码进行加密
     public void setPassword(String password) {
         this.password = CommonUtils.encryptPassword(password);

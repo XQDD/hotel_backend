@@ -1,11 +1,13 @@
 package com.zheng.hotel.service;
 
 import com.zheng.hotel.bean.room.Room;
+import com.zheng.hotel.bean.room.RoomRecord;
 import com.zheng.hotel.bean.room.RoomTag;
 import com.zheng.hotel.configuration.exception.BusinessException;
 import com.zheng.hotel.dto.Result;
 import com.zheng.hotel.dto.page.PageInfo;
 import com.zheng.hotel.dto.page.PageResult;
+import com.zheng.hotel.repository.RoomRecordRepository;
 import com.zheng.hotel.repository.RoomRepository;
 import com.zheng.hotel.repository.RoomTagRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +18,15 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +34,7 @@ import java.util.Optional;
 public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomTagRepository roomTagRepository;
+    private final RoomRecordRepository roomRecordRepository;
 
     @Transactional(rollbackFor = BusinessException.class)
     public void save(Room room) {
@@ -46,7 +53,22 @@ public class RoomService {
     }
 
     public PageResult<Room> getRoomList(PageInfo pageInfo, String keyword, Integer order
-            , Boolean asc, List<String> tags, Long startTime, Long endTime) {
+            , Boolean asc, List<String> tags, Long startTime, Long endTime, Boolean opened) {
+        //查出已被预定的房号
+        List<RoomRecord> roomRecords = null;
+        if (startTime != null && endTime != null) {
+            if (startTime > endTime) {
+                roomRecords = roomRecordRepository.findByDateGreaterThanEqualAndDateLessThanEqualAndStatusNot(endTime, startTime, 3);
+            } else {
+                roomRecords = roomRecordRepository.findByDateGreaterThanEqualAndDateLessThanEqualAndStatusNot(startTime, endTime, 3);
+            }
+        } else if (startTime != null) {
+            roomRecords = roomRecordRepository.findByDateAndStatusNot(startTime, 3);
+        } else if (endTime != null) {
+            roomRecords = roomRecordRepository.findByDateAndStatusNot(endTime, 3);
+        }
+        List<RoomRecord> finalRoomRecords = roomRecords;
+
         return new PageResult<>(roomRepository.findAll((root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
             if (StringUtils.isNotBlank(keyword)) {
@@ -80,23 +102,13 @@ public class RoomService {
                 tags.forEach(tag -> predicates.add(cb.equal(root.joinList("roomTags", JoinType.LEFT).get("name"), tag)));
             }
             //筛选未被预定或已退房的房间
-            if (startTime != null || endTime != null) {
-                var record = root.join("roomRecords", JoinType.LEFT);
-                Expression<Long> recordDate = record.get("date");
-                var recordStatus = record.get("status");
-                //区间
-                if (startTime != null && endTime != null) {
-                    predicates.add(filterRecord(cb.lessThan(recordDate, startTime), cb, recordStatus));
-                    predicates.add(filterRecord(cb.greaterThan(recordDate, endTime), cb, recordStatus));
-                }
-                //单个日期
-                else if (startTime != null) {
-                    predicates.add(filterRecord(cb.notEqual(recordDate, startTime), cb, recordStatus));
-                } else if (endTime != null) {
-                    predicates.add(filterRecord(cb.notEqual(recordDate, endTime), cb, recordStatus));
-                }
+            if (CollectionUtils.isNotEmpty(finalRoomRecords)) {
+                predicates.add(cb.not(root.get("id").in(finalRoomRecords.stream().map(r -> r.getRoom().getId()).collect(Collectors.toList()))));
             }
-
+            //客房是否开启
+            if (opened != null) {
+                predicates.add(cb.equal(root.get("opened"), opened));
+            }
             return query
                     .distinct(true)
                     .where(predicates.toArray(Predicate[]::new))
@@ -105,10 +117,6 @@ public class RoomService {
         }, pageInfo.getPageRequest()));
     }
 
-    //排除状态为3(退房)和null的
-    private Predicate filterRecord(Predicate predicate, CriteriaBuilder criteriaBuilder, Path path) {
-        return criteriaBuilder.or(predicate, criteriaBuilder.and(criteriaBuilder.not(predicate), criteriaBuilder.or(criteriaBuilder.equal(path, 3), path.isNull())), path.isNull());
-    }
 
     public Optional<Room> findById(long id) {
         return roomRepository.findById(id);
