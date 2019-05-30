@@ -156,6 +156,7 @@ public class SystemUserService {
     public void delete(long sysUserId) {
         var user = systemUserRepository.findById(sysUserId).orElseThrow(() -> Result.badRequestException("操作失败，系统用户不存在"));
         user.setDeleted(true);
+        user.setName("deleted_"+user.getName());
         systemUserRepository.save(user);
 
     }
