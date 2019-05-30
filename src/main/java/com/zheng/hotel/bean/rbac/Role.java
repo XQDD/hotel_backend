@@ -11,6 +11,7 @@ import java.util.List;
 @Entity
 @Data
 @NoArgsConstructor
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
 public class Role {
 
     @Id
@@ -18,6 +19,7 @@ public class Role {
     private Long id;
     //角色名
     @NotBlank
+    @Column(length = 100)
     private String name;
     
     //拥有的权限

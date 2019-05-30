@@ -10,12 +10,17 @@ import com.zheng.hotel.repository.PermissionLongRepository;
 import com.zheng.hotel.repository.RoleLongRepository;
 import com.zheng.hotel.repository.SystemUserLongRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.criteria.JoinType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 
@@ -41,7 +46,16 @@ public class SystemUserService {
     }
 
     public void save(SystemUser systemUser) {
-        systemUserRepository.save(systemUser);
+        try {
+            //修改操作时不修改密码，将密码设置为数据库中的密码再保存
+            if (systemUser.getId() != null && systemUser.getPassword() == null) {
+                var user = systemUserRepository.findById(systemUser.getId()).orElseThrow(() -> Result.badRequestException("管理员不存在"));
+                systemUser.setPasswordDirect(user.getPassword());
+            }
+            systemUserRepository.save(systemUser);
+        } catch (DataIntegrityViolationException e) {
+            throw Result.badRequestException(Map.of("name", "该管理员已存在"));
+        }
     }
 
     public SystemUser getOne(Long id) {
@@ -87,6 +101,9 @@ public class SystemUserService {
             permissions.add(new Permission("获取所有角色信息", "sys:user:getAllRole"));
             permissions.add(new Permission("获取系统用户列表", "sys:user:list"));
             permissions.add(new Permission("删除系统用户", "sys:user:delete"));
+            permissions.add(new Permission("获取系统用户详情", "sys:user:detail"));
+            permissions.add(new Permission("删除系统角色", "sys:user:deleteRole"));
+
 
             //客房模块
             permissions.add(new Permission("添加/修改客房信息", "sys:room:save"));
@@ -103,6 +120,8 @@ public class SystemUserService {
             //客户模块
             permissions.add(new Permission("获取所有客户资料", "sys:customer:getAllCustomers"));
             permissions.add(new Permission("添加/更新客户资料", "sys:customer:save"));
+            permissions.add(new Permission("获取客户详情", "sys:customer:detail"));
+
 
             //通用模块
             permissions.add(new Permission("文件上传", "sys:common:upload"));
@@ -112,15 +131,26 @@ public class SystemUserService {
     }
 
     public void saveRole(Role role) {
-        roleRepository.save(role);
+        try {
+            roleRepository.save(role);
+        } catch (DataIntegrityViolationException e) {
+            throw Result.badRequestException("该系统角色已存在");
+        }
     }
 
     public List<Permission> getAllPermission() {
         return permissionRepository.findAll();
     }
 
-    public List<Role> getAllRole() {
-        return roleRepository.findAll();
+    public List<Role> getAllRole(String keyword) {
+        return roleRepository.findAll((root, query, cb) -> {
+            var predicates = new ArrayList<javax.persistence.criteria.Predicate>();
+            if (keyword != null) {
+                var likeKeyword = "%" + keyword + "%";
+                predicates.add(cb.like(root.get("name"), likeKeyword));
+            }
+            return query.where(predicates.toArray(javax.persistence.criteria.Predicate[]::new)).getRestriction();
+        });
     }
 
     public void delete(long sysUserId) {
@@ -130,15 +160,26 @@ public class SystemUserService {
 
     }
 
-    public PageResult<SystemUser> list(PageInfo pageInfo, String keyword) {
+    public PageResult<SystemUser> list(PageInfo pageInfo, String keyword, List<Long> roles) {
         return new PageResult<>(systemUserRepository.findAll((root, query, cb) -> {
             var predicates = new ArrayList<javax.persistence.criteria.Predicate>();
             if (StringUtils.isNotBlank(keyword)) {
                 var likeKeyword = "%" + keyword + "%";
                 predicates.add(cb.like(root.get("name"), likeKeyword));
             }
+            if (CollectionUtils.isNotEmpty(roles)) {
+                roles.forEach(id -> predicates.add(cb.equal(root.joinList("roles", JoinType.LEFT).get("id"), id)));
+            }
             predicates.add(cb.equal(root.get("deleted"), false));
             return query.where(predicates.toArray(javax.persistence.criteria.Predicate[]::new)).getRestriction();
         }, pageInfo.getPageRequest()));
+    }
+
+    public Optional<SystemUser> detail(long sysUserId) {
+        return systemUserRepository.findById(sysUserId);
+    }
+
+    public void deleteRole(long roleId) {
+        roleRepository.deleteById(roleId);
     }
 }

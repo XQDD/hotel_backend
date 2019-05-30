@@ -30,6 +30,7 @@ import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @Api(tags = "用户")
@@ -85,9 +86,12 @@ public class SystemUserController {
     @PostMapping("save")
     @ApiOperation("添加或修改用户信息")
     public ResponseEntity save(@RequestBody @Valid SystemUser systemUser) {
-        if (systemUser.getId() == 1) {
-            if (systemUser.getRoles().size() != 1 || systemUser.getRoles().get(0).getId() != 1)
-                throw Result.badRequestException("系统初始超级管理员角色不可更改");
+        if (systemUser.getId() != null && systemUser.getId() == 1) {
+            if (systemUser.getRoles() == null || systemUser.getRoles().size() != 1 || systemUser.getRoles().get(0).getId() == null || systemUser.getRoles().get(0).getId() != 1)
+                throw Result.badRequestException("系统初始超级管理员拥有的角色不可更改");
+        }
+        if (systemUser.getId() == null && systemUser.getPassword() == null) {
+            throw Result.badRequestException(Map.of("password", "不能为空"));
         }
         systemUserService.save(systemUser);
         return Result.ok();
@@ -98,7 +102,7 @@ public class SystemUserController {
     @PostMapping("saveRole")
     @ApiOperation("添加/修改系统角色权限")
     public ResponseEntity saveRole(@RequestBody @Valid Role role) {
-        if (role.getId() == 1) {
+        if (role.getId() != null && role.getId() == 1) {
             throw Result.badRequestException("系统初始角色不可更改");
         }
         systemUserService.saveRole(role);
@@ -116,8 +120,8 @@ public class SystemUserController {
     @RequiresPermissions("sys:user:getAllRole")
     @GetMapping("getAllRole")
     @ApiOperation("获取所有角色信息")
-    public ResponseEntity<Result<List<Role>>> getAllRole() {
-        return Result.ok(systemUserService.getAllRole());
+    public ResponseEntity<Result<List<Role>>> getAllRole(String keyword) {
+        return Result.ok(systemUserService.getAllRole(keyword));
     }
 
 
@@ -125,6 +129,9 @@ public class SystemUserController {
     @GetMapping("delete")
     @ApiOperation("删除系统用户")
     public ResponseEntity delete(long sysUserId) {
+        if (sysUserId == 1) {
+            throw Result.badRequestException("系统初始超级管理员不能删除");
+        }
         systemUserService.delete(sysUserId);
         return Result.ok();
     }
@@ -133,9 +140,28 @@ public class SystemUserController {
     @RequiresPermissions("sys:user:list")
     @GetMapping("list")
     @ApiOperation("获取系统用户列表")
-    public ResponseEntity<Result<PageResult<SystemUser>>> list(PageInfo pageInfo, String keyword) {
-        return Result.ok(systemUserService.list(pageInfo,keyword));
+    public ResponseEntity<Result<PageResult<SystemUser>>> list(PageInfo pageInfo, String keyword, @RequestParam(value = "roles[]", required = false) List<Long> roles) {
+        return Result.ok(systemUserService.list(pageInfo, keyword, roles));
     }
 
+
+    @RequiresPermissions("sys:user:detail")
+    @GetMapping("detail")
+    @ApiOperation("获取系统用户详情")
+    public ResponseEntity<Result<Optional<SystemUser>>> detail(long sysUserId) {
+        return Result.ok(systemUserService.detail(sysUserId));
+    }
+
+
+    @RequiresPermissions("sys:user:deleteRole")
+    @GetMapping("deleteRole")
+    @ApiOperation("删除系统角色")
+    public ResponseEntity deleteRole(long roleId) {
+        if (roleId == 1) {
+            throw Result.badRequestException("系统初始超级管理员角色不能删除");
+        }
+        systemUserService.deleteRole(roleId);
+        return Result.ok();
+    }
 
 }

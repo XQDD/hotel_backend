@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Optional;
 
 @RestController
 @Api(tags = "客户")
@@ -40,5 +41,13 @@ public class CustomerController {
         customerService.save(customer);
         return Result.ok();
     }
+
+    @RequiresPermissions("sys:customer:detail")
+    @GetMapping("detail")
+    @ApiOperation("获取客户详情")
+    public ResponseEntity<Result<Optional<Customer>>> detail(long customerId) {
+        return Result.ok(customerService.detail(customerId));
+    }
+
 
 }

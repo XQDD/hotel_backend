@@ -22,7 +22,7 @@ spring:
   jpa:
     hibernate:
       #ddl模式
-      ddl-auto: update
+      ddl-auto: create-drop
     #显示sql语句
     show-sql: true
     properties:

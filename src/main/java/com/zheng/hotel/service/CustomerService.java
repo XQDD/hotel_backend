@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,4 +35,9 @@ public class CustomerService {
     public void save(Customer customer) {
         customerRepository.save(customer);
     }
+
+    public Optional<Customer> detail(long customerId) {
+        return customerRepository.findById(customerId);
+    }
+
 }
